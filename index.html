@@ -1,46 +1,71 @@
 <?php
-// ----------------------------------------------------------
-// SIMPLE CTF SQL INJECTION SIMULATION - No real database used
-// ----------------------------------------------------------
+// -----------------------------------------------
+// SQL INJECTION CTF - FakeBank (Single-file)
+// -----------------------------------------------
 
-// Simulated database (in real SQL this would be unsafe)
+// Simulated database user
 $stored_username = "admin";
 $stored_password = "admin";
 
-// User balance simulation
-$balance = 500000;
+// Persistent balance using session
+session_start();
+if (!isset($_SESSION["balance"])) {
+    $_SESSION["balance"] = 500000; // initial balance
+}
 
-// Handle login
 $logged_in = false;
-$flag = "{SQL_Master_Unlocked}";
 $message = "";
+$flag = "{SQL_Master_Unlocked}";
 
+// Handle Login
 if (isset($_POST["username"]) && isset($_POST["password"])) {
 
     $username = $_POST["username"];
     $password = $_POST["password"];
 
-    // SQL Injection vulnerable check
-    // Simulated vulnerable query:
-    // SELECT * FROM users WHERE username='$username' AND password='$password'
+    // Vulnerable logic (simulating SQL injection bypass)
     if (($username === $stored_username && $password === $stored_password) ||
-        (strpos($username, "' OR 1=1") !== false || strpos($password, "' OR 1=1") !== false)) {
+        strpos($username, "' OR 1=1") !== false ||
+        strpos($password, "' OR 1=1") !== false) {
 
+        $_SESSION["logged_in"] = true;
         $logged_in = true;
-        $message = "Access granted! Welcome Bob. DarkCom left a message...";
+        $message = "Access granted! DarkCom exploited this flaw...";
     } else {
         $message = "Invalid login!";
     }
 }
 
-// Handle transfer
-if (isset($_POST["transfer"])) {
-    $message = "Money transferred successfully!";
+// Load session login status
+if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
+    $logged_in = true;
 }
 
-// Handle withdraw
+// Handle Transfer
+if (isset($_POST["transfer"])) {
+    if ($_SESSION["balance"] >= 10000) {
+        $_SESSION["balance"] -= 10000;
+        $message = "You transferred $10,000 successfully!";
+    } else {
+        $message = "Insufficient funds!";
+    }
+}
+
+// Handle Withdraw
 if (isset($_POST["withdraw"])) {
-    $message = "Withdrawal complete!";
+    if ($_SESSION["balance"] >= 5000) {
+        $_SESSION["balance"] -= 5000;
+        $message = "You withdrew $5,000 successfully!";
+    } else {
+        $message = "Insufficient funds!";
+    }
+}
+
+// Handle Logout
+if (isset($_POST["logout"])) {
+    session_destroy();
+    header("Location: index.php");
+    exit;
 }
 
 ?>
@@ -107,15 +132,17 @@ if (isset($_POST["withdraw"])) {
 <?php else: ?>
 
     <div class="box">
-        <h2>Welcome Bob</h2>
-        <p>Account Balance: <strong>$<?php echo number_format($balance); ?></strong></p>
+        <h2>Welcome Bob NotHacker</h2>
+        <p>Account Balance: <strong>$<?php echo number_format($_SESSION["balance"]); ?></strong></p>
 
         <form method="POST">
-            <button name="transfer">Transfer Money</button>
-            <button name="withdraw">Withdraw</button>
+            <button name="transfer">Transfer $10,000</button>
+            <button name="withdraw">Withdraw $5,000</button>
+            <button name="logout" style="background:#660000; color:white;">Logout</button>
         </form>
 
         <p class="msg"><?php echo $message; ?></p>
+
         <p style="margin-top:20px; color:#ff0000;">Flag: <strong><?php echo $flag; ?></strong></p>
     </div>
 
