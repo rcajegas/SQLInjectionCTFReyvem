@@ -1,0 +1,125 @@
+<?php
+// ----------------------------------------------------------
+// SIMPLE CTF SQL INJECTION SIMULATION - No real database used
+// ----------------------------------------------------------
+
+// Simulated database (in real SQL this would be unsafe)
+$stored_username = "admin";
+$stored_password = "admin";
+
+// User balance simulation
+$balance = 500000;
+
+// Handle login
+$logged_in = false;
+$flag = "{SQL_Master_Unlocked}";
+$message = "";
+
+if (isset($_POST["username"]) && isset($_POST["password"])) {
+
+    $username = $_POST["username"];
+    $password = $_POST["password"];
+
+    // SQL Injection vulnerable check
+    // Simulated vulnerable query:
+    // SELECT * FROM users WHERE username='$username' AND password='$password'
+    if (($username === $stored_username && $password === $stored_password) ||
+        (strpos($username, "' OR 1=1") !== false || strpos($password, "' OR 1=1") !== false)) {
+
+        $logged_in = true;
+        $message = "Access granted! Welcome Bob. DarkCom left a message...";
+    } else {
+        $message = "Invalid login!";
+    }
+}
+
+// Handle transfer
+if (isset($_POST["transfer"])) {
+    $message = "Money transferred successfully!";
+}
+
+// Handle withdraw
+if (isset($_POST["withdraw"])) {
+    $message = "Withdrawal complete!";
+}
+
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FakeBank Login</title>
+    <style>
+        body {
+            background: #0a0a0a;
+            color: #ff3333;
+            font-family: monospace;
+            text-align: center;
+            margin-top: 80px;
+        }
+        .box {
+            background: #1a1a1a;
+            padding: 20px;
+            width: 350px;
+            margin: auto;
+            border: 2px solid red;
+            border-radius: 8px;
+        }
+        input {
+            padding: 10px;
+            width: 80%;
+            margin-bottom: 10px;
+            background: #000;
+            color: red;
+            border: 1px solid red;
+        }
+        button {
+            padding: 10px 20px;
+            background: red;
+            color: black;
+            border: none;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #ff6666;
+        }
+        .msg {
+            margin-top: 15px;
+            color: #ff6666;
+        }
+    </style>
+</head>
+<body>
+
+<?php if (!$logged_in): ?>
+
+    <div class="box">
+        <h2>FakeBank Login</h2>
+        <form method="POST">
+            <input type="text" name="username" placeholder="Enter username"><br>
+            <input type="password" name="password" placeholder="Enter password"><br>
+            <button type="submit">Login</button>
+        </form>
+        <p class="msg"><?php echo $message; ?></p>
+    </div>
+
+<?php else: ?>
+
+    <div class="box">
+        <h2>Welcome Bob</h2>
+        <p>Account Balance: <strong>$<?php echo number_format($balance); ?></strong></p>
+
+        <form method="POST">
+            <button name="transfer">Transfer Money</button>
+            <button name="withdraw">Withdraw</button>
+        </form>
+
+        <p class="msg"><?php echo $message; ?></p>
+        <p style="margin-top:20px; color:#ff0000;">Flag: <strong><?php echo $flag; ?></strong></p>
+    </div>
+
+<?php endif; ?>
+
+</body>
+</html>
